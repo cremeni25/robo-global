@@ -8,29 +8,35 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# ----- MODELO DO BODY -----
 class AtualizarPayload(BaseModel):
     id_produto: str
     metrica: str
     valor: float
 
+
+# ----- ENDPOINT STATUS -----
 @app.get("/status")
 def status():
     return {"status": "ok"}
 
+
+# ----- LISTAR PRODUTOS -----
 @app.get("/produtos")
 def listar_produtos():
     supabase = get_supabase()
     res = supabase.table("produtos").select("*").execute()
     return res.data
 
-@app.post("/atualizar")
-def atualizar(payload: AtualizarPayload):
+
+# ----- SALVAR NA TABELA CORRETA -----
+def salvar_metrica_historica(id_produto: str, metrica: str, valor: float):
     supabase = get_supabase()
 
-    res = supabase.table("plataforma_metrica").insert({
-        "id_produto": payload.id_produto,
-        "metrica": payload.metrica,
-        "valor": payload.valor
-    }).execute()
+    data = {
+        "id_produto": id_produto,
+        "métrica": metrica,   # nome da COLUNA exatamente como está no Supabase
+        "valor": valor
+    }
 
-    return {"status": "sucesso", "data": res.data}
+    re
