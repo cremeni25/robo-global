@@ -5,38 +5,68 @@ from supabase_client import get_supabase
 app = FastAPI(
     title="Robô Global de Afiliados",
     description="API para ranking e pontuação de produtos usando Supabase.",
-    version="1.0.0"
+    version="2.0.0"
 )
 
-# ----- MODELO DO BODY -----
+# ------------------------------------------------------------
+# MODELO DO BODY DO /atualizar
+# ------------------------------------------------------------
 class AtualizarPayload(BaseModel):
     id_produto: str
     metrica: str
     valor: float
 
 
-# ----- ENDPOINT STATUS -----
+# ------------------------------------------------------------
+# /status
+# ------------------------------------------------------------
 @app.get("/status")
 def status():
-    return {"status": "ok"}
+    return {"status": "OK", "supabase": "conectado"}
 
 
-# ----- LISTAR PRODUTOS -----
+# ------------------------------------------------------------
+# /produtos
+# ------------------------------------------------------------
 @app.get("/produtos")
 def listar_produtos():
-    supabase = get_supabase()
-    res = supabase.table("produtos").select("*").execute()
-    return res.data
+    try:
+        supabase = get_supabase()
+        res = supabase.table("produtos").select("*").execute()
+        return res.data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao consultar produtos: {e}")
 
 
-# ----- SALVAR NA TABELA CORRETA -----
+# ------------------------------------------------------------
+# Função interna para salvar na tabela metrica_historica
+# ------------------------------------------------------------
 def salvar_metrica_historica(id_produto: str, metrica: str, valor: float):
     supabase = get_supabase()
 
     data = {
         "id_produto": id_produto,
-        "métrica": metrica,   # nome da COLUNA exatamente como está no Supabase
+        "metrica": metrica,
         "valor": valor
     }
 
-    re
+    return supabase.table("metrica_historica").insert(data).execute()
+
+
+# ------------------------------------------------------------
+# /atualizar
+# ------------------------------------------------------------
+@app.post("/atualizar")
+def atualizar_metrica(payload: AtualizarPayload):
+    try:
+        salvar_metrica_historica(payload.id_produto, payload.metrica, payload.valor)
+        return {"status": "ok"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao atualizar: {e}")
+
+
+# ------------------------------------------------------------
+# /pontuacao
+# ------------------------------------------------------------
+@app.get("/pontuacao")
+def li
